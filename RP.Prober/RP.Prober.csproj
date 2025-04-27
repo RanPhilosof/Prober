@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Prober.Interfaces.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Prober.Interfaces.cs" />
+  </ItemGroup>
+    
+  <ItemGroup>        
+    <PackageReference Include="CircularBuffer" Version="1.4.0" />        
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+  </ItemGroup>
+	
+</Project>
