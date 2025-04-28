@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using RP.Prober.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -39,13 +41,16 @@ namespace RP.Prober.Singleton
 
             buffer = new CircularBuffer<T>(cacheSize);
 
-            _headers = headers ?? new List<string>();
+
+            if (headers != null)
+                _headers = headerType == HeaderType.Row ? (new List<string>() { "Fields" }).Concat(headers).ToList() : headers;
+            else
+                _headers = new List<string>();
+
             _headerType = headerType;
 
             ProberCacheClub.ProberCacheClubSingleton.Register(this);
         }
-
-        
 
         public void EnqueueCyclic(T t)
         {
@@ -65,39 +70,53 @@ namespace RP.Prober.Singleton
             lock (buffer)
                 items = buffer.ToList();
 
-            if (_headerType == HeaderType.Column)
+            var convert = Convert;
+
+            if (convert != null)
             {
                 foreach (var item in items)
-                    res.Add(Convert(item));
-            }
+                {
+                    if (_headerType == HeaderType.Row)
+                        res.Add(new List<string>() { "Values" }.Concat(Convert(item)).ToList());
+                    else
+                        res.Add(Convert(item));
+                }
+
+                if (_headerType == HeaderType.Row)
+                    res = Transpose(res);
+            }          
 
             return res;
         }
 
-        //private Queue<List<string>> buffer = new Queue<List<string>>();
-        
-        private static int counter = 0;
-
-
-        public static List<string> Headers = new List<string>() { "Index", "N1", "N2", "N3", "State" };
-
-        public List<string> GenerateNewLine()
+        private static List<List<string>> Transpose(List<List<string>> input)
         {
-            counter++;
+            if (input == null || input.Count == 0)
+                return new List<List<string>>();
 
-            return new List<string>() { $"{counter}", $"{Random.Shared.Next(1, 10)}", $"{Random.Shared.Next(11, 20)}", $"{Random.Shared.Next(21, 30)}", $"{strs[Random.Shared.Next(0, 4)]}"  };
+            int rowCount = input.Count;
+            int colCount = input[0].Count;
+
+            var result = new List<List<string>>(colCount);
+
+            for (int col = 0; col < colCount; col++)
+            {
+                var newRow = new List<string>(rowCount);
+                for (int row = 0; row < rowCount; row++)
+                {
+                    newRow.Add(input[row][col]);
+                }
+                result.Add(newRow);
+            }
+
+            return result;
         }
-        
-        public static List<string> strs = new List<string>() { "T1T1", "T3T1", "Clear", "Min", "Mean" };
 
         public void Dispose()
         {
             ProberCacheClub.ProberCacheClubSingleton.Unregister(this);
-        }
-
-        
+        }        
     }
-
 
     public class TableInfo
     {

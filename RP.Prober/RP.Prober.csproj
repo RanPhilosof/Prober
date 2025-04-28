@@ -5,14 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Prober.Interfaces.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Prober.Interfaces.cs" />
-  </ItemGroup>
     
   <ItemGroup>        
     <PackageReference Include="CircularBuffer" Version="1.4.0" />        
