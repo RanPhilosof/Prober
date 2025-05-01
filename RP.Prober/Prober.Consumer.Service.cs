@@ -122,6 +122,7 @@ namespace Prober.Consumer.Service
             {
                 LogError($"Target refused, {client.BaseAddress.Host}:{client.BaseAddress.Port}");
                 LogError(httpExcetption.ToString());
+                LogError($"Lala11 + {DateTime.Now.Second}");
             }
             catch (Exception ex)
             {
@@ -131,7 +132,7 @@ namespace Prober.Consumer.Service
             return result;
         }
 
-        private readonly ConcurrentQueue<string> _logHistory = new();
+        private readonly ConcurrentQueue<Tuple<long, string>> _logHistory = new();
         private const int MaxLogLines = 100;
         private long _logSequence = 0;
         public long CurrentLogSequence => _logSequence;
@@ -143,8 +144,9 @@ namespace Prober.Consumer.Service
                 var line = $"[{DateTime.Now:HH:mm:ss}] {message}";
                 _logger?.LogInformation(line);
 
-                _logHistory.Enqueue(line);
-                Interlocked.Increment(ref _logSequence); // ensure thread safety
+                var lineNum = Interlocked.Increment(ref _logSequence); // ensure thread safety
+                _logHistory.Enqueue(Tuple.Create<long, string>(lineNum, line));
+                
 
                 // Keep only the last N entries
                 while (_logHistory.Count > MaxLogLines)
@@ -154,6 +156,6 @@ namespace Prober.Consumer.Service
             }
         }
 
-        public List<string> GetLogHistory() => _logHistory.ToList();
+        public List<Tuple<long, string>> GetLogHistory() => _logHistory.ToList();
     }
 }
