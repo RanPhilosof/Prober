@@ -156,6 +156,16 @@ namespace Prober.Consumer.Service
             }
         }
 
+        public List<Tuple<long, string>> GetLogHistoryAndClear()
+        {
+            var logs = new List<Tuple<long, string>>(_logHistory.Count);
+
+            while (_logHistory.TryDequeue(out Tuple<long, string>  log)) 
+                logs.Add(log);
+            
+            return logs;
+        }
+
         public List<Tuple<long, string>> GetLogHistory() => _logHistory.ToList();
     }
 }
