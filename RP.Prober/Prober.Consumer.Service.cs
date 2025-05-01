@@ -121,8 +121,8 @@ namespace Prober.Consumer.Service
             catch (HttpRequestException httpExcetption)
             {
                 LogError($"Target refused, {client.BaseAddress.Host}:{client.BaseAddress.Port}");
-                LogError(httpExcetption.ToString());
-                LogError($"Lala11 + {DateTime.Now.Second}");
+                //LogError(httpExcetption.ToString());
+                //LogError($"Lala11 + {DateTime.Now.Second}");
             }
             catch (Exception ex)
             {
