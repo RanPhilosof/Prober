@@ -4,6 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <PackageId>RP.Prober.Razor.Component</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Ran Philosof</Authors>
+    <Description>Razor Component Of Prober</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/RanPhilosof/Prober</RepositoryUrl>
+	  
   </PropertyGroup>
 
 
