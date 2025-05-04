@@ -16,11 +16,8 @@
 	
   <ItemGroup>        
     <PackageReference Include="CircularBuffer" Version="1.4.0" />        
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
-  </ItemGroup>
-    
-  <ItemGroup>
-    <ProjectReference Include="..\..\Infra\RP.Infra\RP.Infra.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />        
+    <PackageReference Include="RP.Infra" Version="1.0.0" />
   </ItemGroup>
 	
 </Project>
