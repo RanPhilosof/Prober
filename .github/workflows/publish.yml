@@ -18,11 +18,17 @@ jobs:
       with:
         dotnet-version: '8.0.x' # Use the correct version for your project
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Restore all projects
+      run: |
+        for proj in $(find . -name "*.csproj"); do
+        dotnet restore "$proj"
+        done
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+    - name: Build all projects
+      run: |
+        for proj in $(find . -name "*.csproj"); do
+        dotnet build "$proj" --configuration Release --no-restore
+        done  
 
     - name: Pack Prober
       run: dotnet pack ./RP.Prober/RP.Prober.csproj --configuration Release --output ./nupkgs
