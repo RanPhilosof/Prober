@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RP.Prober.DataTypes;
 using RP.Prober.Singleton;
 using System;
 using System.Collections.Generic;

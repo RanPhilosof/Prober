@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using RP.Infra;
+using RP.Prober.DataTypes;
 using RP.Prober.Singleton;
 using System.Collections;
 using System.Collections.Concurrent;
