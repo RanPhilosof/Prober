@@ -122,12 +122,17 @@ namespace RP.Prober.CyclicCacheProbing
 
         private Dictionary<TKey, TValue> dictionary;
 
-        List<string> _headers;
+        private List<string> _headers;
+
+        private bool _transpose;
 
         public KeyedCacheProbing(
             string name,
-            List<string> headers)
+            List<string> headers,
+            bool transpose)
         {
+            _transpose = transpose;
+
             TableName = name;
             TableGuid = Guid.NewGuid();
 
@@ -165,7 +170,22 @@ namespace RP.Prober.CyclicCacheProbing
                 }
             }
 
-            return res;
+            return _transpose ? Transpose(res) : res;
+        }
+
+        static List<List<string>> Transpose(List<List<string>> source)
+        {
+            if (source == null || source.Count == 0)
+                return new List<List<string>>();
+
+            int rowCount = source.Count;
+            int colCount = source[0].Count;
+
+            return Enumerable.Range(0, colCount)
+                             .Select(col => Enumerable.Range(0, rowCount)
+                                                      .Select(row => source[row][col])
+                                                      .ToList())
+                             .ToList();
         }
 
         public void Dispose()
