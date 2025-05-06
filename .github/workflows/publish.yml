@@ -27,7 +27,7 @@ jobs:
     - name: Build all projects
       run: |
         for proj in $(find . -name "*.csproj"); do
-        dotnet build "$proj" --configuration Release --no-restore
+        dotnet build "$proj" --configuration Release
         done  
 
     - name: Pack Prober
