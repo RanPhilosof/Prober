@@ -625,6 +625,15 @@ else
             }
         }
 
+        try
+        {
+            local_tablesData = ProcessTables(local_tablesData, tablesInfo);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+
         tablesData = local_tablesData;
 
         await InvokeAsync(StateHasChanged);
@@ -820,5 +829,155 @@ else
     }
 
     private ElementReference draggableModalRef;
+
+    private List<Table> ProcessTables(List<Table> inputTables, List<ExtendedTableInfoViewModel> tablesInfo)
+    {
+        var guidToAppName = tablesInfo.ToDictionary(x => x.Guid, x => x.ApplicationName);
+
+        // Group by the last part of TableInfo.Name
+        var grouped = inputTables
+            .GroupBy(t => t.TableInfo.Name.Split('/').Last())
+            .ToList();
+
+        var processedTables = new List<Table>();
+        var processedGuids = new HashSet<Guid>();
+
+        foreach (var group in grouped)
+        {
+            var tables = group.ToList();
+
+            // Filter out already processed tables
+            var unprocessed = tables.Where(t => !processedGuids.Contains(t.TableInfo.Guid)).ToList();
+            if (unprocessed.Count < 2)
+            {
+                if (unprocessed.Count == 0)
+                    continue;
+
+                // Only one table — not enough to merge
+                processedTables.AddRange(unprocessed);                
+                processedGuids.Add(unprocessed.First().TableInfo.Guid);
+                continue;
+            }
+
+            // Ensure all tables have 2 rows
+            if (unprocessed.Any(t => t.TableData.Count != 2))
+            {
+                if (unprocessed.Count == 0)
+                    continue;
+
+                processedTables.AddRange(unprocessed);
+                foreach (var unp in unprocessed)
+                    processedGuids.Add(unp.TableInfo.Guid);
+
+                continue;
+            }
+
+            // Ensure headers (first row) contain same set of values (unordered match)
+            var headerSet = new HashSet<string>(unprocessed[0].TableData[0]);
+            if (unprocessed.Any(t => !new HashSet<string>(t.TableData[0]).SetEquals(headerSet)))
+            {
+                processedTables.AddRange(unprocessed);
+                continue;
+            }
+
+            var sortedHeader = headerSet.OrderBy(h => h).ToList(); // Canonical header
+
+            // Align values according to the sorted header
+            var alignedSecondRows = new List<List<string>>();
+            foreach (var table in unprocessed)
+            {
+                var originalHeader = table.TableData[0];
+                var originalValues = table.TableData[1];
+
+                var headerToValue = new Dictionary<string, string>();
+                for (int i = 0; i < originalHeader.Count; i++)
+                    headerToValue[originalHeader[i]] = originalValues[i];
+
+                var alignedRow = sortedHeader.Select(h => headerToValue[h]).ToList();
+                alignedSecondRows.Add(alignedRow);
+            }
+
+            // Transpose the values
+            var transposed = Transpose(alignedSecondRows);
+
+            // Create final merged data
+
+            var finalData = new List<List<string>>();
+
+            var appNames = unprocessed.Select(t => guidToAppName[t.TableInfo.Guid]).ToList();
+            bool hasDuplicates = appNames.Count != appNames.Distinct().Count();
+
+            if (!hasDuplicates)
+            {
+                var headerRow = new List<string> { "Keys" };
+                headerRow.AddRange(unprocessed.Select(t => guidToAppName[t.TableInfo.Guid]));
+
+                finalData.Add(headerRow);
+            }
+            else
+            {
+                var headerRow = new List<string> { "Keys" };
+                headerRow.AddRange(unprocessed.Select(t =>
+                {
+                    var appName = guidToAppName[t.TableInfo.Guid];
+                    var parts = t.TableInfo.Name.Split('/');
+                    string prefix = parts.Length > 1 ? parts[^2] : "";
+                    return string.IsNullOrEmpty(prefix) ? appName : $"{appName}_{prefix}";
+                }));
+
+                finalData.Add(headerRow);
+            }
+
+            for (int i = 0; i < sortedHeader.Count; i++)
+            {
+                var row = new List<string> { sortedHeader[i] };
+                row.AddRange(transposed[i]);
+                finalData.Add(row);
+            }
+
+            // Add the merged table
+            processedTables.Add(new Table
+                {
+                    TableInfo = new TableInfo
+                    {
+                        Name = $"Merged/{group.Key}",
+                        Guid = Guid.Empty // ← Set Guid.Empty as requested
+                    },
+                    TableData = finalData
+                });
+
+            // Mark all involved tables as processed
+            foreach (var t in unprocessed)
+                processedGuids.Add(t.TableInfo.Guid);
+        }
+
+        // Add any remaining unprocessed tables
+        foreach (var table in inputTables)
+        {
+            if (!processedGuids.Contains(table.TableInfo.Guid))
+                processedTables.Add(table);
+        }
+
+        return processedTables;
+    }
+
+    private List<List<string>> Transpose(List<List<string>> matrix)
+    {
+        int rowCount = matrix.Count;
+        int colCount = matrix[0].Count;
+        var transposed = new List<List<string>>();
+
+        for (int i = 0; i < colCount; i++)
+        {
+            var row = new List<string>();
+            for (int j = 0; j < rowCount; j++)
+            {
+                row.Add(matrix[j][i]);
+            }
+            transposed.Add(row);
+        }
+
+        return transposed;
+    }
 
 }
