@@ -154,7 +154,7 @@ namespace RP.Prober.CyclicCacheProbing
 
         public List<List<string>> GetInnerCachedTable()
         {
-            var res = new List<List<string>>() { _headers };
+            var res = new List<List<string>>();
             var items = new List<Tuple<TKey, TValue>>();
 
             lock (dictionary)
@@ -169,6 +169,11 @@ namespace RP.Prober.CyclicCacheProbing
                     res.Add(Convert(item.Item1, item.Item2));
                 }
             }
+
+            res = res.OrderBy(x => x.First()).ToList();
+
+            res.Insert(0, _headers);
+
 
             return _transpose ? Transpose(res) : res;
         }

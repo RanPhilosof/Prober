@@ -51,30 +51,44 @@ namespace RP.Prober.Singleton
 
         public List<Table> GetCachedTables(List<Guid> tablesGuid)
         {
-            var tablesGuidHashset = tablesGuid.ToHashSet();
-
             var tables = new List<Table>();
-            
-            lock (locker)
+
+            try
             {
-                foreach (var tablePublisherCacheMonitoring in tablePublisherCacheMonitorings)
+                var tablesGuidHashset = tablesGuid.ToHashSet();
+
+                lock (locker)
                 {
-                    if (!tablesGuidHashset.Contains(tablePublisherCacheMonitoring.TableGuid))
-                        continue;
-
-                    var table = new Table();
-
-                    if (tablePublisherCacheMonitoring.Available)
+                    foreach (var tablePublisherCacheMonitoring in tablePublisherCacheMonitorings)
                     {
-                        table.TableInfo = new TableInfo();
-                        table.TableInfo.Name = tablePublisherCacheMonitoring.TableName;
-                        table.TableInfo.Guid = tablePublisherCacheMonitoring.TableGuid;
+                        try
+                        {
+                            if (!tablesGuidHashset.Contains(tablePublisherCacheMonitoring.TableGuid))
+                                continue;
 
-                        table.TableData = tablePublisherCacheMonitoring?.GetInnerCachedTable() ?? new List<List<string>>();
+                            var table = new Table();
+
+                            if (tablePublisherCacheMonitoring.Available)
+                            {
+                                table.TableInfo = new TableInfo();
+                                table.TableInfo.Name = tablePublisherCacheMonitoring.TableName;
+                                table.TableInfo.Guid = tablePublisherCacheMonitoring.TableGuid;
+
+                                table.TableData = tablePublisherCacheMonitoring?.GetInnerCachedTable() ?? new List<List<string>>();
+                            }
+
+                            tables.Add(table);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
                     }
-
-                    tables.Add(table);
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
 
             return tables;
