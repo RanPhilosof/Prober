@@ -150,6 +150,12 @@ namespace RP.Prober.CyclicCacheProbing
                 dictionary[key] = value;
         }
 
+        public void RemoveKey(TKey key)
+        {
+            lock (dictionary)
+                dictionary.Remove(key);
+        }
+
         public Func<TKey, TValue, List<string>> Convert;
 
         public List<List<string>> GetInnerCachedTable()
@@ -191,6 +197,55 @@ namespace RP.Prober.CyclicCacheProbing
                                                       .Select(row => source[row][col])
                                                       .ToList())
                              .ToList();
+        }
+
+        public void Dispose()
+        {
+            ProberCacheClub.ProberCacheClubSingleton.Unregister(this);
+        }
+    }
+
+    public class TableCacheProbing<T> : IProberCacheMonitoring, IDisposable
+    {
+        public bool Available => true;
+        public string TableName { get; set; }
+        public Guid TableGuid { get; set; }
+
+        private T table;
+        
+        private object locker = new object();
+
+        public TableCacheProbing(            
+            string name)
+        {
+            TableName = name;
+            TableGuid = Guid.NewGuid();
+
+            ProberCacheClub.ProberCacheClubSingleton.Register(this);
+        }
+
+        public void SetTableData(T t)
+        {
+            lock (locker)
+                table = t;
+        }
+
+        public Func<T, List<List<string>>> Convert;
+
+        public List<List<string>> GetInnerCachedTable()
+        {
+            var res = new List<List<string>>();
+            
+            T localTable = default;
+            
+            lock (locker)
+                localTable = table;            
+
+            var convert = Convert;
+            if (convert != null && localTable != null)
+                res = convert(table);
+
+            return res;
         }
 
         public void Dispose()
