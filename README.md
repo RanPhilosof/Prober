@@ -147,3 +147,10 @@ The <ProberView /> component will auto-fetch and display data from all configure
 * The IServicesInfo implementation (like ServicesInfo) provides discovery metadata based on your environment.
 * The Blazor UI uses ProberView to render real-time data tables.
 * No extra setup is needed in the UI per prober — once probers are registered and REST APIs are live, the UI picks them up.
+
+
+Prober UI Screen Shot:
+
+![{212BBC58-AD34-4A05-B8A6-742C1F68F772}](https://github.com/user-attachments/assets/1b385eb1-2618-4683-b879-4f7ccd7c5f97)
+
+
