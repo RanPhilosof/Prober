@@ -29,8 +29,8 @@ C# Code:
 var prober = new CyclicCacheProbing<Measurment>(
   maxCachedValues: 100,
   name: "Measurement Prober",
-  headers: Measurment.Headers,
-  headerType: HeaderType.Standard);
+  headers: HeaderType.Column,
+  headerType: HeaderType.Column);
 
 prober.Convert = (measure) => new List<string> {
   $"{measure.Counter}",
