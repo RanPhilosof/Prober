@@ -29,7 +29,7 @@ C# Code:
 var prober = new CyclicCacheProbing<Measurment>(
   maxCachedValues: 100,
   name: "Measurement Prober",
-  headers: HeaderType.Column,
+  headers: new List<string>() { "Counter", "Height", "Width", "Size", "Desctiption" },
   headerType: HeaderType.Column);
 
 prober.Convert = (measure) => new List<string> {
@@ -54,6 +54,84 @@ Task.Run(() =>
         description: GetRandomWord()));
     }
   });
+```
+
+## 🧠 Example: Keyed Cache Prober
+C# Code:
+```csharp
+var keyedCacheProbing = new KeyedCacheProbing<string, Measurment>(
+    name: "Keyed Measurement Prober",
+    headers: new List<string> { "Key" }.Concat(new List<string>() { "Counter", "Height", "Width", "Size", "Desctiption" }).ToList(),
+    keepSortedKeys: true);
+
+keyedCacheProbing.Convert = (key, measure) => new List<string> {
+    $"{key}",
+    $"{measure.Counter}",
+    $"{measure.Height}",
+    $"{measure.Width}",
+    $"{measure.Size}",
+    $"{measure.Description}"
+};
+
+// Simulate adding random keyed data
+Task.Run(() =>
+{
+    while (true)
+    {
+        Thread.Sleep(100);
+        var key = GetRandomKey();
+        var measure = new Measurment(
+            height: Random.Shared.Next(1, 10),
+            width: Random.Shared.Next(11, 20),
+            size: Random.Shared.Next(21, 30),
+            description: GetRandomWord());
+
+        keyedCacheProbing.SetKeyValue(key, measure);
+    }
+});
+
+string GetRandomKey() =>
+    new[] { "Flow1", "Flow2", "Flow3", "Flow4", "Flow5", "Flow6" }[Random.Shared.Next(6)];
+
+string GetRandomWord() =>
+    new[] { "apple", "banana", "cherry", "dog", "elephant", "flower" }[Random.Shared.Next(6)];
+```
+
+## 📊 Example: Table Cache Prober
+C# Code:
+```csharp
+var tableCacheProbing = new TableCacheProbing<MyTable>("Table Prober");
+
+tableCacheProbing.Convert = (table) =>
+{
+    var result = new List<List<string>>();
+    foreach (var row in table.Values)
+    {
+        result.Add(row.Select(cell => cell.ToString()).ToList());
+    }
+    return result;
+};
+
+// Set initial data
+tableCacheProbing.SetTableData(new MyTable());
+
+public class MyTable
+{
+    public List<List<object>> Values = new List<List<object>>();
+
+    public MyTable()
+    {
+        Values.Add(new List<object> { "Table1" });
+        Values.Add(new List<object> { "Values", "Values" });
+        Values.Add(new List<object> { 10, 20, 30, 40, 50, 60, 70, 80, 90 });
+        Values.Add(new List<object> { 10, 20, 30, 40, 50, 60, 70, 80, 90 });
+        Values.Add(new List<object> { 10, 20, 30, 90 });
+        Values.Add(new List<object> { "Table2" });
+        Values.Add(new List<object> { "Values", "Values" });
+        Values.Add(new List<object> { 10, 20, 30, 80, 90 });
+        Values.Add(new List<object> { 10, 20, 30, 40, 50, 60, 70, 80, 90 });
+    }
+}
 ```
 
 ## 📡 REST API for External Access
