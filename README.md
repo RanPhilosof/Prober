@@ -151,6 +151,6 @@ The <ProberView /> component will auto-fetch and display data from all configure
 
 Prober UI Screen Shot:
 
-![Screenshot](https://github.com/user-attachments/assets/1b385eb1-2618-4683-b879-4f7ccd7c5f97)
+![Screenshot](https://github.com/RanPhilosof/Prober/blob/main/readme_screenshot.png?raw=true)
 
 
