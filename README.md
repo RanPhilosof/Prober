@@ -1,10 +1,10 @@
-Prober – Lightweight Runtime Data Probing with Minimal Application Impact
+## Prober – Lightweight Runtime Data Probing with Minimal Application Impact
 Prober is a lightweight .NET library that enables efficient runtime data monitoring from your application with minimal overhead and app impact. It offers flexible probing mechanisms that cache data internally and expose it through a REST API – ideal for debugging, UI visualization, logging, or real-time telemetry.
 
-🌟 Key Features
+## 🌟 Key Features
 Minimal Impact: Data is only processed when requested (lazy conversion).
 
-Flexible Probing Types:
+### Flexible Probing Types:
 * Cyclic Cached Prober – Circular buffer with fixed size.
 * Key-Value Cached Prober – Object cache accessed by ID.
 * Single Object Prober – Holds and exposes a single data object.
@@ -13,7 +13,7 @@ Flexible Probing Types:
 * Generic UI Support: Thanks to the uniform tabular output format, UIs can generically render any probed data.
 
 
-🔧 How It Works
+## 🔧 How It Works
 
 When you create a Prober instance, you define:
 1. The data type you want to probe.
@@ -22,10 +22,10 @@ When you create a Prober instance, you define:
   The actual data conversion only happens on demand (e.g., when a UI requests it via the API).
 All active probers are registered into a central "club" that manages and serves data to any registered consumer (UI, logger, etc.).
 
-🚀 Example: Cyclic Cache Prober
+## 🚀 Example: Cyclic Cache Prober
 
 C# Code:
-<pre> 
+```csharp
 var prober = new CyclicCacheProbing<Measurment>(
   maxCachedValues: 100,
   name: "Measurement Prober",
@@ -54,13 +54,13 @@ Task.Run(() =>
         description: GetRandomWord()));
     }
   });
-</pre>
+```
 
-📡 REST API for External Access
+## 📡 REST API for External Access
 To expose probed data, integrate this controller in your ASP.NET Core app:
 
 C# Code:
-<pre> 
+```csharp
 [ApiController]
 [Route("api/[controller]")]
 public class ProberCacheMonitoringController : ControllerBase
@@ -77,72 +77,72 @@ public class ProberCacheMonitoringController : ControllerBase
         return ProberCacheClub.ProberCacheClubSingleton.GetCachedTables(tablesGuid);
     }
 }
-    </pre>
+```
     
 Just launch your Kestrel web server, and you're ready to remotely inspect live application data!
 
-💡 Use Cases
+## 💡 Use Cases
 * Real-time UI dashboards
 * File/CSV/DB recording
 * Debug visualization
 * Remote telemetry in distributed systems
 
-📦 Install via NuGet
+## 📦 Install via NuGet
 dotnet add package RP.Prober
 
-🖥️ Blazor UI for Viewing Prober Data
+## 🖥️ Blazor UI for Viewing Prober Data
 The RP.Prober.Razor.Component NuGet package provides a generic Blazor UI component that can automatically discover and display live data from multiple running applications that use the Prober system.
 
-📦 Required NuGet Packages
+## 📦 Required NuGet Packages
 To integrate the Prober UI into your Blazor WebAssembly or Server project, make sure to include the following NuGet packages:
 
 Blazor App Csproj Dependencies:
-<Pre>
+```csharp
 <PackageReference Include="RP.Infra" Version="1.0.3" />
 <PackageReference Include="RP.Prober" Version="1.0.7" />
 <PackageReference Include="RP.Prober.Razor.Component" Version="1.0.7" />
 <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
-</Pre>
+```
 
-🔧 Register Required Services
+## 🔧 Register Required Services
 In your Program.cs (or wherever you configure services), add the following lines:
 
 C# Code At Blazor Page At Program.cs:
-<Pre>
+```csharp
 builder.Services.AddSingleton<ProberCacheMonitoringService>(); // Consumes data from multiple apps
 builder.Services.AddSingleton<IServicesInfo>(new ServicesInfo()); // Discovers available apps/services to probe
 builder.Services.AddBlazoredLocalStorage(); // Needed by the Razor component for state management
-</Pre>
+```
 
-🌐 Configure Services Discovery (Optional but Recommended)
+## 🌐 Configure Services Discovery (Optional but Recommended)
 If you're using the built-in ServicesInfo implementation (recommended for simpler setups), you need to define environment variables that describe each app that Prober should connect to.
 
 Here’s an example for a service called RanBlazor:
 
 Environment Variables:
-<Pre>
+```xml
 "Services:RanBlazor:Ip": "127.0.0.1",
 "Services:RanBlazor:RestApiPort": "7287",
 "Services:RanBlazor:SupportProberMonitor": "true",
 "Services:RanBlazor:RestApiSecured": "true"
-</Pre>
+```
 You can configure multiple services this way, each under its own key (e.g., Services:App1, Services:App2, etc.).
 
-💻 Razor Page Integration
+## 💻 Razor Page Integration
 To display all the probed data in your app’s UI, add the following to any .razor page:
 
 Razor Page:
-<Pre>
+```html
 @page "/ProberDashboard"
 @using RP.Prober.Razor.Component
 
 <PageTitle>Prober Dashboard</PageTitle>
 
 <ProberView />
+```
 The <ProberView /> component will auto-fetch and display data from all configured and running Prober-enabled services.
-</Pre>
 
-🔍 Summary
+## 🔍 Summary
 * All probed data from any number of apps is collected through ProberCacheMonitoringService.
 * The IServicesInfo implementation (like ServicesInfo) provides discovery metadata based on your environment.
 * The Blazor UI uses ProberView to render real-time data tables.
@@ -151,6 +151,6 @@ The <ProberView /> component will auto-fetch and display data from all configure
 
 Prober UI Screen Shot:
 
-![{212BBC58-AD34-4A05-B8A6-742C1F68F772}](https://github.com/user-attachments/assets/1b385eb1-2618-4683-b879-4f7ccd7c5f97)
+![Screenshot](https://github.com/user-attachments/assets/1b385eb1-2618-4683-b879-4f7ccd7c5f97)
 
 

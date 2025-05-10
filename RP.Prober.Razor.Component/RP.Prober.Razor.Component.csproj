@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
 
     <PackageId>RP.Prober.Razor.Component</PackageId>
-    <Version>1.0.9</Version>
+    <Version>1.0.10</Version>
     <Authors>Ran Philosof</Authors>
     <Description>Razor Component Of Prober</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
