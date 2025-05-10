@@ -20,11 +20,11 @@ jobs:
 
     - name: Generate version
       id: version
-      run: |
+      run: |               
         BASE_VERSION="1.0.11"
         COMMIT_COUNT=$(git rev-list --count HEAD)
         COMMIT_HASH=$(git rev-parse --short HEAD)
-        VERSION="$BASE_VERSION.$COMMIT_COUNT-$COMMIT_HASH"
+        VERSION="$BASE_VERSION-preview.$COMMIT_COUNT+$COMMIT_HASH"
         echo "VERSION=$VERSION"
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
