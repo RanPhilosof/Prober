@@ -4,9 +4,7 @@
     <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-
     <PackageId>RP.Prober.Razor.Component</PackageId>
-    <Version>1.0.10</Version>
     <Authors>Ran Philosof</Authors>
     <Description>Razor Component Of Prober</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

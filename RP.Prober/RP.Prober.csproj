@@ -4,9 +4,7 @@
 	<TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
-	<PackageId>RP.Prober</PackageId>
-	<Version>1.0.10</Version>
+	<PackageId>RP.Prober</PackageId>	
 	<Authors>Ran Philosof</Authors>
 	<Description>Prober</Description>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>

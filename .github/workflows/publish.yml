@@ -18,6 +18,16 @@ jobs:
       with:
         dotnet-version: '8.0.x' # Use the correct version for your project
 
+    - name: Generate version
+      id: version
+      run: |
+        BASE_VERSION="1.0.11"
+        COMMIT_COUNT=$(git rev-list --count HEAD)
+        COMMIT_HASH=$(git rev-parse --short HEAD)
+        VERSION="$BASE_VERSION.$COMMIT_COUNT-$COMMIT_HASH"
+        echo "VERSION=$VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
     - name: Restore all projects
       run: |
         for proj in $(find . -name "*.csproj"); do
@@ -31,10 +41,10 @@ jobs:
         done  
 
     - name: Pack Prober
-      run: dotnet pack ./RP.Prober/RP.Prober.csproj --configuration Release --output ./nupkgs
+      run: dotnet pack ./RP.Prober/RP.Prober.csproj --configuration Release --output ./nupkgs /p:PackageVersion=${{ steps.version.outputs.version }}
 
     - name: Pack Prober Razor Component
-      run: dotnet pack ./RP.Prober.Razor.Component/RP.Prober.Razor.Component.csproj --configuration Release --output ./nupkgs
+      run: dotnet pack ./RP.Prober.Razor.Component/RP.Prober.Razor.Component.csproj --configuration Release --output ./nupkgs /p:PackageVersion=${{ steps.version.outputs.version }}
 
     - name: Publish to NuGet
       run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
