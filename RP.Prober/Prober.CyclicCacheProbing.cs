@@ -21,7 +21,7 @@ namespace RP.Prober.CyclicCacheProbing
         public string TableName { get; set; }
         public Guid TableGuid { get; set; }
 
-        private CircularBuffer<T> buffer;
+        protected CircularBuffer<T> buffer;
 
         List<string> _headers;
         HeaderType _headerType;
@@ -58,13 +58,18 @@ namespace RP.Prober.CyclicCacheProbing
 
         public Func<T, List<string>> Convert;
 
+        protected virtual List<T> GetItems()
+        {
+            return buffer.ToList();
+        }
+
         public List<List<string>> GetInnerCachedTable()
         {
             var res = new List<List<string>>() { _headers };
             var items = new List<T>();
 
             lock (buffer)
-                items = buffer.ToList();
+                items = GetItems();
 
             var convert = Convert;
 
@@ -251,6 +256,29 @@ namespace RP.Prober.CyclicCacheProbing
         public void Dispose()
         {
             ProberCacheClub.ProberCacheClubSingleton.Unregister(this);
+        }
+    }
+
+    public class ExpendableCyclicCacheProbing<T> : CyclicCacheProbing<T>
+    {
+        public ExpendableCyclicCacheProbing(
+            int cacheSize,
+            string name,
+            List<string> headers,
+            HeaderType headerType) : base(cacheSize, name, headers, headerType) { }
+
+        protected override List<T> GetItems()
+        {
+            var values = new List<T>();
+            var elementsToPop = buffer.Count();
+
+            for (int i = 0; i < elementsToPop; i++)
+            {
+                values.Add(buffer.Back());
+                buffer.PopBack();
+            }
+
+            return values;
         }
     }
 }

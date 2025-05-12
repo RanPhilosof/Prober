@@ -29,7 +29,7 @@ namespace Prober.Consumer.Service
                                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                             };
 
-                            appsThatSupportMonitoring.Add(service.Key, new HttpClient(handler) { BaseAddress = new Uri($"{(service.Value.RestApiSecured ? "https" : "http")}://{service.Value.Ip}:{service.Value.RestApiPort}") });
+                            appsThatSupportMonitoring.Add(service.Key, new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5), BaseAddress = new Uri($"{(service.Value.RestApiSecured ? "https" : "http")}://{service.Value.Ip}:{service.Value.RestApiPort}") });
                         }
                     }
                     catch (Exception ex)

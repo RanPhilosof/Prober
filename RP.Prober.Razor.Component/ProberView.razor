@@ -19,86 +19,89 @@
     Show Console Logs
 </button>
 
-@if (logPopupVisible)
-{
-    <script>
-        let selectedLogIds = new Set(); // Store globally selected log IDs
-        let lastSelectedId = null;
+<script>
+    window.selectedLogIds = window.selectedLogIds || new Set(); // Global storage
+    window.lastSelectedId = window.lastSelectedId || null;
 
-        function selectText(row, event) {
-            const id = row.getAttribute('data-log-id');
-            const allRows = Array.from(document.querySelectorAll('.log-line'));
+    //let selectedLogIds = new Set(); // Store globally selected log IDs
+    //let lastSelectedId = null;
 
-            if (event.shiftKey && lastSelectedId) {
-                const rows = allRows.map(r => ({
-                    id: r.getAttribute('data-log-id'),
-                    el: r
-                }));
+    function selectText(row, event) {
+        const id = row.getAttribute('data-log-id');
+        const allRows = Array.from(document.querySelectorAll('.log-line'));
 
-                const startIndex = rows.findIndex(r => r.id === lastSelectedId);
-                const endIndex = rows.findIndex(r => r.id === id);
-                const [start, end] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
+        if (event.shiftKey && lastSelectedId) {
+            const rows = allRows.map(r => ({
+                id: r.getAttribute('data-log-id'),
+                el: r
+            }));
 
-                selectedLogIds.clear();
-                for (let i = start; i <= end; i++) {
-                    rows[i].el.classList.add('highlighted');
-                    selectedLogIds.add(rows[i].id);
-                }
-            } else {
-                if (selectedLogIds.has(id)) {
-                    selectedLogIds.delete(id);
-                    row.classList.remove('highlighted');
-                } else {
-                    selectedLogIds.clear();
-                    allRows.forEach(r => r.classList.remove('highlighted'));
-                    row.classList.add('highlighted');
-                    selectedLogIds.add(id);
-                }
+            const startIndex = rows.findIndex(r => r.id === lastSelectedId);
+            const endIndex = rows.findIndex(r => r.id === id);
+            const [start, end] = startIndex < endIndex ? [startIndex, endIndex] : [endIndex, startIndex];
+
+            selectedLogIds.clear();
+            for (let i = start; i <= end; i++) {
+                rows[i].el.classList.add('highlighted');
+                selectedLogIds.add(rows[i].id);
             }
-
-            lastSelectedId = id;
+        } else {
+            if (selectedLogIds.has(id)) {
+                selectedLogIds.delete(id);
+                row.classList.remove('highlighted');
+            } else {
+                selectedLogIds.clear();
+                allRows.forEach(r => r.classList.remove('highlighted'));
+                row.classList.add('highlighted');
+                selectedLogIds.add(id);
+            }
         }
 
-        function resetHighlights() {
+        lastSelectedId = id;
+    }
+
+    function resetHighlights() {
+        const allRows = document.querySelectorAll('.log-line');
+        allRows.forEach(row => {
+            const id = row.getAttribute('data-log-id');
+            if (selectedLogIds.has(id)) {
+                row.classList.add('highlighted');
+            } else {
+                row.classList.remove('highlighted');
+            }
+        });
+    }
+
+    document.addEventListener('mousedown', function (e) {
+        if (e.target.closest('.log-line')) {
+            e.preventDefault();
+        }
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.ctrlKey && e.key === 'c') {
+            const selectedRows = document.querySelectorAll('.log-line.highlighted code');
+            if (selectedRows.length > 0) {
+                const text = Array.from(selectedRows).map(el => el.textContent).join('\n');
+                navigator.clipboard.writeText(text).catch(console.error);
+                e.preventDefault();
+            }
+        }
+
+        if (e.ctrlKey && e.key === 'a') {
             const allRows = document.querySelectorAll('.log-line');
             allRows.forEach(row => {
                 const id = row.getAttribute('data-log-id');
-                if (selectedLogIds.has(id)) {
-                    row.classList.add('highlighted');
-                } else {
-                    row.classList.remove('highlighted');
-                }
+                row.classList.add('highlighted');
+                selectedLogIds.add(id);
             });
+            e.preventDefault();
         }
+    });
+</script>
 
-        document.addEventListener('mousedown', function (e) {
-            if (e.target.closest('.log-line')) {
-                e.preventDefault();
-            }
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.ctrlKey && e.key === 'c') {
-                const selectedRows = document.querySelectorAll('.log-line.highlighted code');
-                if (selectedRows.length > 0) {
-                    const text = Array.from(selectedRows).map(el => el.textContent).join('\n');
-                    navigator.clipboard.writeText(text).catch(console.error);
-                    e.preventDefault();
-                }
-            }
-
-            if (e.ctrlKey && e.key === 'a') {
-                const allRows = document.querySelectorAll('.log-line');
-                allRows.forEach(row => {
-                    const id = row.getAttribute('data-log-id');
-                    row.classList.add('highlighted');
-                    selectedLogIds.add(id);
-                });
-                e.preventDefault();
-            }
-        });
-    </script>
-
+@if (logPopupVisible)
+{
     <div class="modal d-block draggable-modal" tabindex="-1" @ref="draggableModalRef">
         <div class="modal-dialog" style="width: 70vw; max-width: none;">
             <div class="modal-content resizable-box">
@@ -136,6 +139,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button class="btn btn-outline-primary me-2" @onclick="ClearLogs">Clear Logs</button>
                     <button class="btn btn-outline-primary me-2" @onclick="ToggleAutoScroll">
                         @(autoScrollEnabled ? "Pause Auto-Scroll" : "Resume Auto-Scroll")
                     </button>
@@ -254,6 +258,201 @@
     <label for="showSelectedToggle">Show only selected</label>
 </div>
 
+<style>
+    .tabs {
+        display: flex;
+        border-bottom: 2px solid #ccc;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+
+    .tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        border-bottom: none;
+        background-color: #f1f1f1;
+        margin-right: 4px;
+    }
+
+        .tab.active {
+            background-color: white;
+            font-weight: bold;
+            border-top: 2px solid #007bff;
+            border-left: 1px solid #ccc;
+            border-right: 1px solid #ccc;
+        }
+
+    .tab-content {
+        display: none;
+    }
+
+        .tab-content.active {
+            display: block;
+        }
+
+    .my-custom-table th,
+    .my-custom-table td {
+        border: 1px solid #ccc;
+        padding: 0.5rem 1rem;
+        text-align: left !important;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .my-custom-table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+</style>
+
+<script>
+    function showTab(index) {
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => tab.classList.remove('active'));
+        contents.forEach(content => content.classList.remove('active'));
+
+        tabs[index].classList.add('active');
+        contents[index].classList.add('active');
+    }
+</script>
+<script>
+    function scrollToLastLogLine() {
+        const container = document.querySelector('[data-log-container]');
+        const logs = container?.querySelectorAll('[id^="log-line-"]');
+        if (logs?.length > 0) {
+            const lastLog = logs[logs.length - 1];
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+</script>
+
+<script>
+    function selectTextById(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const range = document.createRange();
+        range.selectNodeContents(el);
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+</script>
+
+
+
+<script>
+    // let dragData = null;
+    window.dragData = window.dragData || null;
+
+    document.addEventListener('mousedown', function (e) {
+        if (e.target.closest('.modal-header')) {
+            const modal = e.target.closest('.draggable-modal');
+            dragData = {
+                element: modal,
+                offsetX: e.clientX - modal.offsetLeft,
+                offsetY: e.clientY - modal.offsetTop
+            };
+        }
+    });
+
+    document.addEventListener('mousemove', function (e) {
+        if (dragData) {
+            const { element, offsetX, offsetY } = dragData;
+            element.style.left = (e.clientX - offsetX) + 'px';
+            element.style.top = (e.clientY - offsetY) + 'px';
+        }
+    });
+
+    document.addEventListener('mouseup', function () {
+        dragData = null;
+    });
+</script>
+
+<style>
+
+    .modal.d-block {
+        position: fixed;
+        top: 100px;
+        left: 100px;
+        width: auto;
+        height: auto;
+        background-color: transparent;
+        pointer-events: none;
+        z-index: 1050;
+    }
+
+    .modal-dialog {
+        margin: 0;
+        pointer-events: auto;
+        position: static;
+    }
+
+    .draggable-modal {
+        width: fit-content;
+        height: fit-content;
+        background: none;
+        resize: none;
+        overflow: visible;
+        position: fixed;
+        top: 100px;
+        left: 100px;
+        z-index: 1050;
+    }
+
+    .resizable-box {
+        display: flex;
+        flex-direction: column;
+        resize: both;
+        overflow: auto;
+        min-width: 300px;
+        min-height: 200px;
+        max-width: 95vw;
+        max-height: 90vh;
+        background-color: white;
+    }
+
+</style>
+
+<style>
+    body.modal-open {
+        overflow: hidden !important;
+    }
+</style>
+
+<style>
+    .custom-modal {
+        position: fixed;
+        top: 100px;
+        left: 100px;
+        z-index: 1050;
+        resize: both;
+        overflow: auto;
+        max-width: 95%;
+        max-height: 95%;
+        min-width: 300px;
+        min-height: 200px;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .modal-header, .modal-footer {
+        cursor: move; /* Allow drag behavior */
+    }
+
+    .modal-backdrop,
+    .modal-backdrop.show,
+    .modal-backdrop.fade {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+</style>
+
 @if (tablesInfo == null)
 {
     <p><em>Loading...</em></p>
@@ -300,52 +499,7 @@ else
         @(isPaused ? "Resume Refresh" : "Pause Refresh")
     </button>
 
-    <style>
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #ccc;
-            margin-bottom: 1rem;
-            cursor: pointer;
-        }
 
-        .tab {
-            padding: 0.5rem 1rem;
-            border: 1px solid #ccc;
-            border-bottom: none;
-            background-color: #f1f1f1;
-            margin-right: 4px;
-        }
-
-            .tab.active {
-                background-color: white;
-                font-weight: bold;
-                border-top: 2px solid #007bff;
-                border-left: 1px solid #ccc;
-                border-right: 1px solid #ccc;
-            }
-
-        .tab-content {
-            display: none;
-        }
-
-            .tab-content.active {
-                display: block;
-            }
-
-        .my-custom-table th,
-        .my-custom-table td {
-            border: 1px solid #ccc;
-            padding: 0.5rem 1rem;
-            text-align: left !important;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-
-        .my-custom-table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-    </style>
 
     <div class="tabs" id="tab-buttons">
         @for (int i = 0; i < groupedTables.Count; i++)
@@ -395,153 +549,6 @@ else
             }
         </div>
     }
-
-    <script>
-        function showTab(index) {
-            const tabs = document.querySelectorAll('.tab');
-            const contents = document.querySelectorAll('.tab-content');
-
-            tabs.forEach(tab => tab.classList.remove('active'));
-            contents.forEach(content => content.classList.remove('active'));
-
-            tabs[index].classList.add('active');
-            contents[index].classList.add('active');
-        }
-    </script>
-    <script>
-        function scrollToLastLogLine() {
-            const container = document.querySelector('[data-log-container]');
-            const logs = container?.querySelectorAll('[id^="log-line-"]');
-            if (logs?.length > 0) {
-                const lastLog = logs[logs.length - 1];
-                container.scrollTop = container.scrollHeight;
-            }
-        }
-    </script>
-
-    <script>
-        function selectTextById(id) {
-            const el = document.getElementById(id);
-            if (!el) return;
-
-            const range = document.createRange();
-            range.selectNodeContents(el);
-
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-    </script>
-
-
-
-    <script>
-        let dragData = null;
-
-        document.addEventListener('mousedown', function (e) {
-            if (e.target.closest('.modal-header')) {
-                const modal = e.target.closest('.draggable-modal');
-                dragData = {
-                    element: modal,
-                    offsetX: e.clientX - modal.offsetLeft,
-                    offsetY: e.clientY - modal.offsetTop
-                };
-            }
-        });
-
-        document.addEventListener('mousemove', function (e) {
-            if (dragData) {
-                const { element, offsetX, offsetY } = dragData;
-                element.style.left = (e.clientX - offsetX) + 'px';
-                element.style.top = (e.clientY - offsetY) + 'px';
-            }
-        });
-
-        document.addEventListener('mouseup', function () {
-            dragData = null;
-        });
-    </script>
-
-    <style>
-
-        .modal.d-block {
-            position: fixed;
-            top: 100px;
-            left: 100px;
-            width: auto;
-            height: auto;
-            background-color: transparent;
-            pointer-events: none;
-            z-index: 1050;
-        }
-
-        .modal-dialog {
-            margin: 0;
-            pointer-events: auto;
-            position: static;
-        }
-
-        .draggable-modal {
-            width: fit-content;
-            height: fit-content;
-            background: none;
-            resize: none;
-            overflow: visible;
-            position: fixed;
-            top: 100px;
-            left: 100px;
-            z-index: 1050;
-        }
-
-        .resizable-box {
-            display: flex;
-            flex-direction: column;
-            resize: both;
-            overflow: auto;
-            min-width: 300px;
-            min-height: 200px;
-            max-width: 95vw;
-            max-height: 90vh;
-            background-color: white;
-        }
-
-    </style>
-
-    <style>
-        body.modal-open {
-            overflow: hidden !important;
-        }
-    </style>
-
-    <style>
-        .custom-modal {
-            position: fixed;
-            top: 100px;
-            left: 100px;
-            z-index: 1050;
-            resize: both;
-            overflow: auto;
-            max-width: 95%;
-            max-height: 95%;
-            min-width: 300px;
-            min-height: 200px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-        }
-
-        .modal-header, .modal-footer {
-            cursor: move; /* Allow drag behavior */
-        }
-
-        .modal-backdrop,
-        .modal-backdrop.show,
-        .modal-backdrop.fade {
-            display: none !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-
-    </style>
 }
 
 @code {
@@ -597,7 +604,7 @@ else
                 LoadFavorite(defaultFavorite); // auto-load selection
             }
 
-            timer = new Timer(new TimerCallback((o) => UpdateTablesData()), null, 1000, 1000);
+            timer = new Timer(new TimerCallback((o) => UpdateTablesData()), null, 1000, Timeout.Infinite);
 
             StartLogWatcher();
         }
@@ -610,33 +617,49 @@ else
 
     private async void UpdateTablesData()
     {
-        if (isPaused)
-            return;
-
-        var local_tablesData = new List<Table>();
-        var dictionary = tablesInfo.GroupBy(x => x.ApplicationName).ToDictionary(g => g.Key, g => g.ToList());
-
-        foreach (var dict in dictionary)
-        {
-            if (dict.Value.Count > 0 && dict.Value.Any(x => x.Capture))
-            {
-                var result = await proberCacheMonitoringService.GetAppTableDataAsync(dict.Key, dict.Value.Where(x => x.Capture).Select(x => x.Guid).ToList());
-                local_tablesData.AddRange(result);
-            }
-        }
-
         try
         {
-            local_tablesData = ProcessTables(local_tablesData, tablesInfo);
+            if (isPaused)
+                return;
+
+            var local_tablesData = new List<Table>();
+            var dictionary = tablesInfo.GroupBy(x => x.ApplicationName).ToDictionary(g => g.Key, g => g.ToList());
+
+            var tasks = new List<Task<List<Table>>>(); 
+
+            foreach (var dict in dictionary)
+            {
+                if (dict.Value.Count > 0 && dict.Value.Any(x => x.Capture))
+                {                    
+                    tasks.Add(proberCacheMonitoringService.GetAppTableDataAsync(dict.Key, dict.Value.Where(x => x.Capture).Select(x => x.Guid).ToList()));
+                }
+            }
+
+            var results = await Task.WhenAll(tasks);
+            foreach (var result in results)
+                local_tablesData.AddRange(result);
+
+            try
+            {
+                local_tablesData = ProcessTables(local_tablesData, tablesInfo);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+            tablesData = local_tablesData;
+
+            await InvokeAsync(StateHasChanged);
         }
-        catch (Exception ex)
+        catch(Exception ex)
         {
             Console.WriteLine(ex);
         }
-
-        tablesData = local_tablesData;
-
-        await InvokeAsync(StateHasChanged);
+        finally
+        {
+            timer.Change(1000, Timeout.Infinite);
+        }
     }
 
     private void TogglePause()
@@ -788,13 +811,18 @@ else
         }, null, 0, 1000);
     }
 
+    private void ClearLogs()
+    {
+        lock (liveLogs)
+            liveLogs.Clear();
+    }
+
     private async Task ToggleLogPopup()
     {
         logPopupVisible = !logPopupVisible;
 
         if (logPopupVisible)
         {
-            liveLogs.Clear();
             await FetchAndAppendLogsPeriodically();
         }
     }
@@ -806,7 +834,9 @@ else
             var logs = proberCacheMonitoringService.GetLogHistoryAndClear();
             if (logs.Any())
             {
-                liveLogs.AddRange(logs);
+                lock (liveLogs)
+                    liveLogs.AddRange(logs);
+
                 StateHasChanged();
                 await ScrollToBottom();
                 lastSeenLogSequence = proberCacheMonitoringService.CurrentLogSequence;
