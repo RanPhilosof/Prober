@@ -10,7 +10,7 @@ namespace Prober.Consumer.Service
 {    
     public class ProberCacheMonitoringService
     {
-        private Dictionary<string, HttpClient> appsThatSupportMonitoring = new Dictionary<string, HttpClient>();
+        private Dictionary<string, Tuple<bool, HttpClient>> appsThatSupportMonitoring = new Dictionary<string, Tuple<bool, HttpClient>>();
         private ILogger<ProberCacheMonitoringService> _logger;
         public ProberCacheMonitoringService(IServicesInfo servicesInfo, ILogger<ProberCacheMonitoringService> logger)
         {
@@ -29,7 +29,7 @@ namespace Prober.Consumer.Service
                                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                             };
 
-                            appsThatSupportMonitoring.Add(service.Key, new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5), BaseAddress = new Uri($"{(service.Value.RestApiSecured ? "https" : "http")}://{service.Value.Ip}:{service.Value.RestApiPort}") });
+                            appsThatSupportMonitoring.Add(service.Key, Tuple.Create(true, new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(5), BaseAddress = new Uri($"{(service.Value.RestApiSecured ? "https" : "http")}://{service.Value.Ip}:{service.Value.RestApiPort}") }));
                         }
                     }
                     catch (Exception ex)
@@ -44,6 +44,18 @@ namespace Prober.Consumer.Service
             }
         }
 
+        public List<Tuple<string,bool>> GetAppsActiveStatus()
+        {
+            return appsThatSupportMonitoring.Select(x => Tuple.Create(x.Key, x.Value.Item1)).ToList();
+        }
+
+        public void SetAppsActiveStatus(List<Tuple<string, bool>> appsActiveStatus)
+        {
+            foreach (var ap in appsActiveStatus)
+                if (appsThatSupportMonitoring.ContainsKey(ap.Item1))
+                    appsThatSupportMonitoring[ap.Item1] = Tuple.Create(ap.Item2, appsThatSupportMonitoring[ap.Item1].Item2);
+        }
+
         public async Task<List<Tuple<string, List<ExtendedTableInfo>>>> GetAllAppsTableInfoAsync()
         {                        
             var result = new List<Tuple<string, List<ExtendedTableInfo>>>();
@@ -54,9 +66,12 @@ namespace Prober.Consumer.Service
                 {
                     try
                     {
-                        var appTableInfo = await GetAppTableInfo(app.Value);
+                        if (app.Value.Item1)
+                        {
+                            var appTableInfo = await GetAppTableInfo(app.Value.Item2);
 
-                        result.Add(Tuple.Create(app.Key, appTableInfo));
+                            result.Add(Tuple.Create(app.Key, appTableInfo));
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -94,7 +109,7 @@ namespace Prober.Consumer.Service
 
             try
             {
-                res = await GetAppTableData(appsThatSupportMonitoring[appName], guids);
+                res = await GetAppTableData(appsThatSupportMonitoring[appName].Item2, guids);
             }
             catch (Exception ex)
             {
