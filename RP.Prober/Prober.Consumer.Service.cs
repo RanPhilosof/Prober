@@ -46,17 +46,30 @@ namespace Prober.Consumer.Service
 
         public async Task<List<Tuple<string, List<ExtendedTableInfo>>>> GetAllAppsTableInfoAsync()
         {                        
-            var result = new List<Tuple<string, List<ExtendedTableInfo>>>();
-
+            var result = new List<Tuple<string, List<ExtendedTableInfo>>>();            
             try
             {
+                var tasks = new List<Tuple<string, Task<List<ExtendedTableInfo>>>>();
+
                 foreach (var app in appsThatSupportMonitoring)
                 {
                     try
                     {
-                        var appTableInfo = await GetAppTableInfo(app.Value);
+                        var appTableInfo = GetAppTableInfo(app.Value);
 
-                        result.Add(Tuple.Create(app.Key, appTableInfo));
+                        tasks.Add(Tuple.Create(app.Key, appTableInfo));
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError(ex.ToString());
+                    }
+                }
+
+                foreach (var task in tasks)
+                {
+                    try
+                    {
+                        result.Add(Tuple.Create(task.Item1, await task.Item2));
                     }
                     catch (Exception ex)
                     {

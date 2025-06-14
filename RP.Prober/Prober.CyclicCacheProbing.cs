@@ -212,17 +212,23 @@ namespace RP.Prober.CyclicCacheProbing
 
     public class TableCacheProbing<T> : IProberCacheMonitoring, IDisposable
     {
+        private static readonly List<List<string>> EMPTY_TABLE = new(0);
+        private readonly List<List<string>> _headersOnlyTable;
+
         public bool Available => true;
         public string TableName { get; set; }
         public Guid TableGuid { get; set; }
 
         private T table;
-        
+        private List<string> _headers;
+
         private object locker = new object();
 
-        public TableCacheProbing(            
-            string name)
+        public TableCacheProbing(string name, List<string> headers = null!)
         {
+            _headers = headers;
+            _headersOnlyTable = true == _headers?.Any() ? new List<List<string>>() { _headers } : EMPTY_TABLE;
+
             TableName = name;
             TableGuid = Guid.NewGuid();
 
@@ -239,24 +245,31 @@ namespace RP.Prober.CyclicCacheProbing
 
         public List<List<string>> GetInnerCachedTable()
         {
-            var res = new List<List<string>>();
-            
-            T localTable = default;
-            
+            List<List<string>> res = null!;
+
+            T localTable;
+
             lock (locker)
-                localTable = table;            
+                localTable = table;
 
             var convert = Convert;
             if (convert != null && localTable != null)
-                res = convert(table);
+            {
+                res = convert(localTable);
+                if (true == _headers?.Any())
+                {
+                    res.Insert(0, _headers);
+                }
+            }
+            else if (true == _headers?.Any())
+            {
+                res = _headersOnlyTable;
+            }
 
-            return res;
+            return res ?? EMPTY_TABLE;
         }
 
-        public void Dispose()
-        {
-            ProberCacheClub.ProberCacheClubSingleton.Unregister(this);
-        }
+        public void Dispose() => ProberCacheClub.ProberCacheClubSingleton.Unregister(this);
     }
 
     public class ExpendableCyclicCacheProbing<T> : CyclicCacheProbing<T>

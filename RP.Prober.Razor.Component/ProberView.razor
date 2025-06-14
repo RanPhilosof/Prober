@@ -865,8 +865,12 @@ else
         var guidToAppName = tablesInfo.ToDictionary(x => x.Guid, x => x.ApplicationName);
 
         // Group by the last part of TableInfo.Name
+        //var grouped = inputTables
+        //    .GroupBy(t => t.TableInfo.Name.Split('/').Last())
+        //    .ToList();
+
         var grouped = inputTables
-            .GroupBy(t => t.TableInfo.Name.Split('/').Last())
+            .GroupBy(t => $"{t.TableInfo.Name.Split('/').Last()}_{tablesInfo.First(x => x.Guid == t.TableInfo.Guid).GroupIndex}")            
             .ToList();
 
         var processedTables = new List<Table>();
